@@ -1,0 +1,9 @@
+{
+  "id": "atom-creator",
+  "name": "Atom Creator",
+  "version": "1.0.0",
+  "minAppVersion": "1.0.0",
+  "description": "Trasforma righe con #atom in note atom strutturate. Funziona su tutti i dispositivi.",
+  "author": "Daniele D'Amico",
+  "isDesktopOnly": false
+}
