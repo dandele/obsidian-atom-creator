@@ -1,7 +1,7 @@
 {
   "id": "supertags",
   "name": "SuperTags",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "minAppVersion": "1.0.0",
   "description": "Tana-style supertags for Obsidian. Tag a line, get a structured note — instantly, on every device.",
   "author": "Daniele D'Amico",
