@@ -26,18 +26,19 @@ export default class AtomCreator extends Plugin {
 				if (this.processing.has(file.path)) return;
 
 				clearTimeout(this.debounceMap[file.path]);
-				this.debounceMap[file.path] = setTimeout(async () => {
+				const run = async () => {
 					this.processing.add(file.path);
 					try {
 						await processFile(file, this.settings, this.app.vault, this.app.workspace);
 					} finally {
 						setTimeout(() => this.processing.delete(file.path), 1000);
 					}
-				}, this.settings.debounceMs);
+				};
+				this.debounceMap[file.path] = setTimeout(() => void run(), this.settings.debounceMs);
 			})
 		);
 
-		console.log('Atom Creator loaded');
+		console.debug('SuperTags loaded');
 	}
 
 	onunload() {

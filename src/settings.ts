@@ -80,9 +80,9 @@ export class AtomCreatorSettingTab extends PluginSettingTab {
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
-		containerEl.createEl('h2', { text: 'Atom Creator' });
 
-		// ── Global settings ──────────────────────────────────────────
+		new Setting(containerEl).setName('SuperTags').setHeading();
+
 		new Setting(containerEl)
 			.setName('Watch folders')
 			.setDesc('Comma-separated folders monitored for supertags (e.g. Calendar/, Inbox/).')
@@ -108,8 +108,7 @@ export class AtomCreatorSettingTab extends PluginSettingTab {
 					}
 				}));
 
-		// ── Supertags ─────────────────────────────────────────────────
-		containerEl.createEl('h3', { text: 'Supertags' });
+		new Setting(containerEl).setName('Supertags').setHeading();
 		containerEl.createEl('p', {
 			text: 'Each supertag defines a trigger tag, a destination folder, and templates for the frontmatter and body of the created note.',
 			cls: 'setting-item-description',
@@ -126,7 +125,7 @@ export class AtomCreatorSettingTab extends PluginSettingTab {
 					this.plugin.settings.supertags.push({
 						id: randomId(),
 						tag: '#newtag',
-						name: 'New Tag',
+						name: 'New tag',
 						color: '#0ea5e9',
 						folder: 'Notes/',
 						frontmatterTemplate: 'type:\n  - note\ncreated: {{date}}',
@@ -141,28 +140,22 @@ export class AtomCreatorSettingTab extends PluginSettingTab {
 		container.empty();
 
 		for (const [index, supertag] of this.plugin.settings.supertags.entries()) {
-			const card = container.createDiv({ cls: 'atom-creator-supertag-card' });
-			card.style.cssText = 'border: 1px solid var(--background-modifier-border); border-radius: 8px; padding: 12px 16px; margin-bottom: 12px;';
+			const card = container.createDiv({ cls: 'st-card' });
 
-			// Header row with chip preview + delete button
-			const header = card.createDiv({ cls: 'atom-creator-supertag-header' });
-			header.style.cssText = 'display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;';
+			const header = card.createDiv({ cls: 'st-card-header' });
 
-			const chip = header.createEl('span');
+			const chip = header.createEl('span', { cls: 'st-settings-chip' });
 			chip.textContent = supertag.tag;
-			chip.style.cssText = `background: ${supertag.color}; color: white; border-radius: 4px; padding: 2px 10px; font-weight: 600; font-size: 0.85em;`;
+			chip.setCssProps({ '--st-chip-bg': supertag.color });
 
-			const deleteBtn = header.createEl('button', { text: '✕ Remove' });
-			deleteBtn.style.cssText = 'font-size: 0.8em; color: var(--text-muted);';
-			deleteBtn.onclick = async () => {
+			const deleteBtn = header.createEl('button', { text: '✕ Remove', cls: 'st-delete-btn' });
+			deleteBtn.onclick = () => void (async () => {
 				this.plugin.settings.supertags.splice(index, 1);
 				await this.plugin.saveSettings();
 				this.display();
-			};
+			})();
 
-			// Tag + Name row
-			const row1 = card.createDiv();
-			row1.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;';
+			const row1 = card.createDiv({ cls: 'st-grid-2' });
 
 			this.inlineInput(row1, 'Tag', supertag.tag, async v => {
 				supertag.tag = v.startsWith('#') ? v : '#' + v;
@@ -175,34 +168,30 @@ export class AtomCreatorSettingTab extends PluginSettingTab {
 				await this.plugin.saveSettings();
 			});
 
-			// Color + Folder row
-			const row2 = card.createDiv();
-			row2.style.cssText = 'display: grid; grid-template-columns: 80px 1fr; gap: 8px; margin-bottom: 8px; align-items: end;';
+			const row2 = card.createDiv({ cls: 'st-grid-color' });
 
 			const colorWrap = row2.createDiv();
 			colorWrap.createEl('small', { text: 'Color', cls: 'setting-item-description' });
-			const colorInput = colorWrap.createEl('input', { type: 'color' } as DomElementInfo) as HTMLInputElement;
+			const colorInput = colorWrap.createEl('input', { type: 'color' });
+			colorInput.addClass('st-color-input');
 			colorInput.value = supertag.color;
-			colorInput.style.cssText = 'width: 100%; height: 32px; border: none; cursor: pointer; border-radius: 4px;';
-			colorInput.oninput = async () => {
+			colorInput.oninput = () => void (async () => {
 				supertag.color = colorInput.value;
-				chip.style.background = supertag.color;
+				chip.setCssProps({ '--st-chip-bg': supertag.color });
 				await this.plugin.saveSettings();
 				this.plugin.refreshDecorations();
-			};
+			})();
 
 			this.inlineInput(row2, 'Destination folder', supertag.folder, async v => {
 				supertag.folder = v.endsWith('/') ? v : v + '/';
 				await this.plugin.saveSettings();
 			});
 
-			// Frontmatter template
 			this.inlineTextarea(card, 'Frontmatter template', supertag.frontmatterTemplate, async v => {
 				supertag.frontmatterTemplate = v;
 				await this.plugin.saveSettings();
 			});
 
-			// Body template
 			this.inlineTextarea(card, 'Body template', supertag.bodyTemplate, async v => {
 				supertag.bodyTemplate = v;
 				await this.plugin.saveSettings();
@@ -218,20 +207,19 @@ export class AtomCreatorSettingTab extends PluginSettingTab {
 	private inlineInput(container: HTMLElement, label: string, value: string, onChange: (v: string) => Promise<void>) {
 		const wrap = container.createDiv();
 		wrap.createEl('small', { text: label, cls: 'setting-item-description' });
-		const input = wrap.createEl('input', { type: 'text' } as DomElementInfo) as HTMLInputElement;
+		const input = wrap.createEl('input', { type: 'text' });
+		input.addClass('st-full-input');
 		input.value = value;
-		input.style.cssText = 'width: 100%; box-sizing: border-box;';
-		input.oninput = () => onChange(input.value);
+		input.oninput = () => { void onChange(input.value); };
 	}
 
 	private inlineTextarea(container: HTMLElement, label: string, value: string, onChange: (v: string) => Promise<void>) {
-		const wrap = container.createDiv();
-		wrap.style.cssText = 'margin-bottom: 8px;';
+		const wrap = container.createDiv({ cls: 'st-textarea-wrap' });
 		wrap.createEl('small', { text: label, cls: 'setting-item-description' });
-		const ta = wrap.createEl('textarea') as HTMLTextAreaElement;
+		const ta = wrap.createEl('textarea');
+		ta.addClass('st-textarea');
 		ta.value = value;
 		ta.rows = 4;
-		ta.style.cssText = 'width: 100%; box-sizing: border-box; font-family: monospace; font-size: 0.85em; resize: vertical;';
-		ta.oninput = () => onChange(ta.value);
+		ta.oninput = () => { void onChange(ta.value); };
 	}
 }

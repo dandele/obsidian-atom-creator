@@ -14,18 +14,7 @@ class SupertagChip extends WidgetType {
 		const chip = document.createElement('span');
 		chip.className = 'atom-creator-chip';
 		chip.textContent = this.label;
-		chip.style.cssText = [
-			`background: ${this.color}`,
-			'color: #fff',
-			'border-radius: 4px',
-			'padding: 1px 7px',
-			'font-size: 0.82em',
-			'font-weight: 600',
-			'letter-spacing: 0.02em',
-			'cursor: default',
-			'vertical-align: middle',
-			'margin-left: 2px',
-		].join(';');
+		chip.setCssProps({ '--st-chip-bg': this.color });
 		return chip;
 	}
 
@@ -68,14 +57,12 @@ export function buildSupertagPlugin(getSupertags: () => Supertag[]) {
 					view.state.selection.main.head
 				).number;
 
-				// Collect all matches across visible ranges, then sort
 				const matches: Array<{ from: number; to: number; tag: Supertag }> = [];
 
 				for (const { from, to } of view.visibleRanges) {
 					let pos = from;
 					while (pos <= to) {
 						const line = view.state.doc.lineAt(pos);
-						// Skip cursor line (user is editing it)
 						if (line.number !== cursorLine) {
 							const lineText = line.text;
 							for (const tag of supertags) {
@@ -95,11 +82,10 @@ export function buildSupertagPlugin(getSupertags: () => Supertag[]) {
 					}
 				}
 
-				// Sort ascending and remove overlaps
 				matches.sort((a, b) => a.from - b.from);
 				let lastTo = -1;
 				for (const { from, to, tag } of matches) {
-					if (from < lastTo) continue; // skip overlap
+					if (from < lastTo) continue;
 					builder.add(
 						from,
 						to,
