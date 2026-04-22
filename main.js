@@ -83,7 +83,6 @@ var AtomCreatorSettingTab = class extends import_obsidian.PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: "Atom Creator" });
     new import_obsidian.Setting(containerEl).setName("Watch folders").setDesc("Comma-separated folders monitored for supertags (e.g. Calendar/, Inbox/).").addText((text) => text.setPlaceholder("Calendar/").setValue(this.plugin.settings.watchFolders).onChange(async (value) => {
       this.plugin.settings.watchFolders = value;
       await this.plugin.saveSettings();
@@ -95,7 +94,7 @@ var AtomCreatorSettingTab = class extends import_obsidian.PluginSettingTab {
         await this.plugin.saveSettings();
       }
     }));
-    containerEl.createEl("h3", { text: "Supertags" });
+    containerEl.createEl("h3", { text: "Tag definitions" });
     containerEl.createEl("p", {
       text: "Each supertag defines a trigger tag, a destination folder, and templates for the frontmatter and body of the created note.",
       cls: "setting-item-description"
@@ -106,7 +105,7 @@ var AtomCreatorSettingTab = class extends import_obsidian.PluginSettingTab {
       this.plugin.settings.supertags.push({
         id: randomId(),
         tag: "#newtag",
-        name: "New Tag",
+        name: "New tag",
         color: "#0ea5e9",
         folder: "Notes/",
         frontmatterTemplate: "type:\n  - note\ncreated: {{date}}",
@@ -220,7 +219,7 @@ ${frontmatter}
 ${body}
 `;
 }
-function showUndoNotice(action, vault, workspace) {
+function showUndoNotice(action, vault, workspace, fileManager) {
   for (const created of action.created) {
     const fragment = document.createDocumentFragment();
     const container = fragment.createEl("div");
@@ -255,15 +254,15 @@ function showUndoNotice(action, vault, workspace) {
     };
     undoBtn.onclick = async () => {
       notice.hide();
-      await undoAction(action, vault);
+      await undoAction(action, vault, fileManager);
     };
   }
 }
-async function undoAction(action, vault) {
+async function undoAction(action, vault, fileManager) {
   for (const created of action.created) {
     const file = vault.getAbstractFileByPath(created.path);
     if (file instanceof import_obsidian2.TFile) {
-      await vault.delete(file);
+      await fileManager.trashFile(file);
     }
   }
   const sourceFile = vault.getAbstractFileByPath(action.filePath);
@@ -272,7 +271,7 @@ async function undoAction(action, vault) {
   }
   new import_obsidian2.Notice("\u21A9 Undo successful");
 }
-async function processFile(file, settings, vault, workspace) {
+async function processFile(file, settings, vault, workspace, fileManager) {
   var _a, _b, _c;
   let content;
   try {
@@ -337,7 +336,7 @@ async function processFile(file, settings, vault, workspace) {
     return;
   await vault.modify(file, lines.join("\n"));
   const action = { filePath: file.path, originalContent, created };
-  showUndoNotice(action, vault, workspace);
+  showUndoNotice(action, vault, workspace, fileManager);
 }
 
 // src/decorations.ts
@@ -466,7 +465,7 @@ var AtomCreator = class extends import_obsidian3.Plugin {
         this.debounceMap[file.path] = setTimeout(async () => {
           this.processing.add(file.path);
           try {
-            await processFile(file, this.settings, this.app.vault, this.app.workspace);
+            await processFile(file, this.settings, this.app.vault, this.app.workspace, this.app.fileManager);
           } finally {
             setTimeout(() => this.processing.delete(file.path), 1e3);
           }
