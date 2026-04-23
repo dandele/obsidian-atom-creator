@@ -83,7 +83,7 @@ export class AtomCreatorSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Watch folders')
-			.setDesc('Comma-separated folders monitored for supertags (e.g. Calendar/, Inbox/).')
+			.setDesc('Comma-separated folders monitored for supertags (e.g. calendar/, inbox/).')
 			.addText(text => text
 				.setPlaceholder('Calendar/')
 				.setValue(this.plugin.settings.watchFolders)
@@ -94,7 +94,7 @@ export class AtomCreatorSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Debounce delay (ms)')
-			.setDesc('Wait time after last edit before processing. Min 500ms.')
+			.setDesc('Wait time after last edit before processing (minimum 500 ms).')
 			.addText(text => text
 				.setPlaceholder('2000')
 				.setValue(String(this.plugin.settings.debounceMs))

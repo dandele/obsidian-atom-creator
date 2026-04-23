@@ -83,11 +83,11 @@ var AtomCreatorSettingTab = class extends import_obsidian.PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    new import_obsidian.Setting(containerEl).setName("Watch folders").setDesc("Comma-separated folders monitored for supertags (e.g. Calendar/, Inbox/).").addText((text) => text.setPlaceholder("Calendar/").setValue(this.plugin.settings.watchFolders).onChange(async (value) => {
+    new import_obsidian.Setting(containerEl).setName("Watch folders").setDesc("Comma-separated folders monitored for supertags (e.g. calendar/, inbox/).").addText((text) => text.setPlaceholder("Calendar/").setValue(this.plugin.settings.watchFolders).onChange(async (value) => {
       this.plugin.settings.watchFolders = value;
       await this.plugin.saveSettings();
     }));
-    new import_obsidian.Setting(containerEl).setName("Debounce delay (ms)").setDesc("Wait time after last edit before processing. Min 500ms.").addText((text) => text.setPlaceholder("2000").setValue(String(this.plugin.settings.debounceMs)).onChange(async (value) => {
+    new import_obsidian.Setting(containerEl).setName("Debounce delay (ms)").setDesc("Wait time after last edit before processing (minimum 500 ms).").addText((text) => text.setPlaceholder("2000").setValue(String(this.plugin.settings.debounceMs)).onChange(async (value) => {
       const n = parseInt(value);
       if (!isNaN(n) && n >= 500) {
         this.plugin.settings.debounceMs = n;
