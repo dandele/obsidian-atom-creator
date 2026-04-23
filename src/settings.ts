@@ -81,8 +81,6 @@ export class AtomCreatorSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		new Setting(containerEl).setName('SuperTags').setHeading();
-
 		new Setting(containerEl)
 			.setName('Watch folders')
 			.setDesc('Comma-separated folders monitored for supertags (e.g. Calendar/, Inbox/).')
@@ -108,7 +106,7 @@ export class AtomCreatorSettingTab extends PluginSettingTab {
 					}
 				}));
 
-		new Setting(containerEl).setName('Supertags').setHeading();
+		new Setting(containerEl).setName('Tag definitions').setHeading();
 		containerEl.createEl('p', {
 			text: 'Each supertag defines a trigger tag, a destination folder, and templates for the frontmatter and body of the created note.',
 			cls: 'setting-item-description',

@@ -94,7 +94,7 @@ var AtomCreatorSettingTab = class extends import_obsidian.PluginSettingTab {
         await this.plugin.saveSettings();
       }
     }));
-    containerEl.createEl("h3", { text: "Tag definitions" });
+    new import_obsidian.Setting(containerEl).setName("Tag definitions").setHeading();
     containerEl.createEl("p", {
       text: "Each supertag defines a trigger tag, a destination folder, and templates for the frontmatter and body of the created note.",
       cls: "setting-item-description"
@@ -118,22 +118,18 @@ var AtomCreatorSettingTab = class extends import_obsidian.PluginSettingTab {
   renderSupertags(container) {
     container.empty();
     for (const [index, supertag] of this.plugin.settings.supertags.entries()) {
-      const card = container.createDiv({ cls: "atom-creator-supertag-card" });
-      card.style.cssText = "border: 1px solid var(--background-modifier-border); border-radius: 8px; padding: 12px 16px; margin-bottom: 12px;";
-      const header = card.createDiv({ cls: "atom-creator-supertag-header" });
-      header.style.cssText = "display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;";
-      const chip = header.createEl("span");
+      const card = container.createDiv({ cls: "st-card" });
+      const header = card.createDiv({ cls: "st-card-header" });
+      const chip = header.createEl("span", { cls: "st-settings-chip" });
       chip.textContent = supertag.tag;
-      chip.style.cssText = `background: ${supertag.color}; color: white; border-radius: 4px; padding: 2px 10px; font-weight: 600; font-size: 0.85em;`;
-      const deleteBtn = header.createEl("button", { text: "\u2715 Remove" });
-      deleteBtn.style.cssText = "font-size: 0.8em; color: var(--text-muted);";
-      deleteBtn.onclick = async () => {
+      chip.setCssProps({ "--st-chip-bg": supertag.color });
+      const deleteBtn = header.createEl("button", { text: "\u2715 Remove", cls: "st-delete-btn" });
+      deleteBtn.onclick = () => void (async () => {
         this.plugin.settings.supertags.splice(index, 1);
         await this.plugin.saveSettings();
         this.display();
-      };
-      const row1 = card.createDiv();
-      row1.style.cssText = "display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;";
+      })();
+      const row1 = card.createDiv({ cls: "st-grid-2" });
       this.inlineInput(row1, "Tag", supertag.tag, async (v) => {
         supertag.tag = v.startsWith("#") ? v : "#" + v;
         chip.textContent = supertag.tag;
@@ -144,19 +140,18 @@ var AtomCreatorSettingTab = class extends import_obsidian.PluginSettingTab {
         supertag.name = v;
         await this.plugin.saveSettings();
       });
-      const row2 = card.createDiv();
-      row2.style.cssText = "display: grid; grid-template-columns: 80px 1fr; gap: 8px; margin-bottom: 8px; align-items: end;";
+      const row2 = card.createDiv({ cls: "st-grid-color" });
       const colorWrap = row2.createDiv();
       colorWrap.createEl("small", { text: "Color", cls: "setting-item-description" });
       const colorInput = colorWrap.createEl("input", { type: "color" });
+      colorInput.addClass("st-color-input");
       colorInput.value = supertag.color;
-      colorInput.style.cssText = "width: 100%; height: 32px; border: none; cursor: pointer; border-radius: 4px;";
-      colorInput.oninput = async () => {
+      colorInput.oninput = () => void (async () => {
         supertag.color = colorInput.value;
-        chip.style.background = supertag.color;
+        chip.setCssProps({ "--st-chip-bg": supertag.color });
         await this.plugin.saveSettings();
         this.plugin.refreshDecorations();
-      };
+      })();
       this.inlineInput(row2, "Destination folder", supertag.folder, async (v) => {
         supertag.folder = v.endsWith("/") ? v : v + "/";
         await this.plugin.saveSettings();
@@ -179,19 +174,22 @@ var AtomCreatorSettingTab = class extends import_obsidian.PluginSettingTab {
     const wrap = container.createDiv();
     wrap.createEl("small", { text: label, cls: "setting-item-description" });
     const input = wrap.createEl("input", { type: "text" });
+    input.addClass("st-full-input");
     input.value = value;
-    input.style.cssText = "width: 100%; box-sizing: border-box;";
-    input.oninput = () => onChange(input.value);
+    input.oninput = () => {
+      void onChange(input.value);
+    };
   }
   inlineTextarea(container, label, value, onChange) {
-    const wrap = container.createDiv();
-    wrap.style.cssText = "margin-bottom: 8px;";
+    const wrap = container.createDiv({ cls: "st-textarea-wrap" });
     wrap.createEl("small", { text: label, cls: "setting-item-description" });
     const ta = wrap.createEl("textarea");
+    ta.addClass("st-textarea");
     ta.value = value;
     ta.rows = 4;
-    ta.style.cssText = "width: 100%; box-sizing: border-box; font-family: monospace; font-size: 0.85em; resize: vertical;";
-    ta.oninput = () => onChange(ta.value);
+    ta.oninput = () => {
+      void onChange(ta.value);
+    };
   }
 };
 
@@ -219,50 +217,38 @@ ${frontmatter}
 ${body}
 `;
 }
-function showUndoNotice(action, vault, workspace, fileManager) {
+function showUndoNotice(action, vault, workspace) {
   for (const created of action.created) {
     const fragment = document.createDocumentFragment();
-    const container = fragment.createEl("div");
-    container.style.cssText = "display:flex;flex-direction:column;gap:6px;";
-    const header = container.createEl("div");
-    header.style.cssText = "display:flex;align-items:center;gap:6px;";
-    const chip = header.createEl("span");
+    const container = fragment.createEl("div", { cls: "st-notice-container" });
+    const header = container.createEl("div", { cls: "st-notice-header" });
+    const chip = header.createEl("span", { cls: "st-notice-chip" });
     chip.textContent = created.supertag.tag;
-    chip.style.cssText = [
-      `background:${created.supertag.color}`,
-      "color:#fff",
-      "border-radius:4px",
-      "padding:1px 7px",
-      "font-size:0.82em",
-      "font-weight:600"
-    ].join(";");
+    chip.setCssProps({ "--st-chip-bg": created.supertag.color });
     header.createEl("span", { text: `"${created.title}"` });
-    const btnRow = container.createEl("div");
-    btnRow.style.cssText = "display:flex;gap:6px;margin-top:2px;";
-    const viewBtn = btnRow.createEl("button", { text: "Open" });
-    viewBtn.style.cssText = "font-size:0.82em;padding:2px 8px;cursor:pointer;";
-    const undoBtn = btnRow.createEl("button", { text: "Undo" });
-    undoBtn.style.cssText = "font-size:0.82em;padding:2px 8px;cursor:pointer;";
+    const btnRow = container.createEl("div", { cls: "st-notice-btn-row" });
+    const viewBtn = btnRow.createEl("button", { text: "Open", cls: "st-notice-btn" });
+    const undoBtn = btnRow.createEl("button", { text: "Undo", cls: "st-notice-btn" });
     const notice = new import_obsidian2.Notice(fragment, 8e3);
-    viewBtn.onclick = async () => {
+    viewBtn.onclick = () => void (async () => {
       const file = vault.getAbstractFileByPath(created.path);
       if (file instanceof import_obsidian2.TFile) {
         const leaf = workspace.getLeaf("tab");
         await leaf.openFile(file);
       }
       notice.hide();
-    };
-    undoBtn.onclick = async () => {
+    })();
+    undoBtn.onclick = () => void (async () => {
       notice.hide();
-      await undoAction(action, vault, fileManager);
-    };
+      await undoAction(action, vault);
+    })();
   }
 }
-async function undoAction(action, vault, fileManager) {
+async function undoAction(action, vault) {
   for (const created of action.created) {
     const file = vault.getAbstractFileByPath(created.path);
     if (file instanceof import_obsidian2.TFile) {
-      await fileManager.trashFile(file);
+      await vault.delete(file);
     }
   }
   const sourceFile = vault.getAbstractFileByPath(action.filePath);
@@ -271,7 +257,7 @@ async function undoAction(action, vault, fileManager) {
   }
   new import_obsidian2.Notice("\u21A9 Undo successful");
 }
-async function processFile(file, settings, vault, workspace, fileManager) {
+async function processFile(file, settings, vault, workspace) {
   var _a, _b, _c;
   let content;
   try {
@@ -294,7 +280,7 @@ async function processFile(file, settings, vault, workspace, fileManager) {
       continue;
     }
     const tagRegex = new RegExp(matchedTag.tag.replace(/[#.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
-    const title = line.replace(/^[\s\-\*\+>]+/, "").replace(tagRegex, "").trim();
+    const title = line.replace(/^[\s*+>-]+/, "").replace(tagRegex, "").trim();
     if (!title) {
       i++;
       continue;
@@ -316,7 +302,7 @@ async function processFile(file, settings, vault, workspace, fileManager) {
       }
       if (((_b = sub.match(/^(\s*)/)) != null ? _b : ["", ""])[1].length <= baseIndent)
         break;
-      subLines.push(sub.replace(/^[\s\-\*\+>]+/, "").trim());
+      subLines.push(sub.replace(/^[\s*+>-]+/, "").trim());
       lastSub = j;
       j++;
     }
@@ -327,7 +313,7 @@ async function processFile(file, settings, vault, workspace, fileManager) {
       continue;
     }
     created.push({ path: notePath, supertag: matchedTag, title });
-    const prefix = ((_c = line.match(/^(\s*[\-\*\+]?\s*)/)) != null ? _c : ["", ""])[1];
+    const prefix = ((_c = line.match(/^(\s*[*+-]?\s*)/)) != null ? _c : ["", ""])[1];
     lines.splice(i, lastSub - i + 1, `${prefix}[[${title}]]`);
     modified = true;
     i++;
@@ -336,7 +322,7 @@ async function processFile(file, settings, vault, workspace, fileManager) {
     return;
   await vault.modify(file, lines.join("\n"));
   const action = { filePath: file.path, originalContent, created };
-  showUndoNotice(action, vault, workspace, fileManager);
+  showUndoNotice(action, vault, workspace);
 }
 
 // src/decorations.ts
@@ -352,18 +338,7 @@ var SupertagChip = class extends import_view.WidgetType {
     const chip = document.createElement("span");
     chip.className = "atom-creator-chip";
     chip.textContent = this.label;
-    chip.style.cssText = [
-      `background: ${this.color}`,
-      "color: #fff",
-      "border-radius: 4px",
-      "padding: 1px 7px",
-      "font-size: 0.82em",
-      "font-weight: 600",
-      "letter-spacing: 0.02em",
-      "cursor: default",
-      "vertical-align: middle",
-      "margin-left: 2px"
-    ].join(";");
+    chip.setCssProps({ "--st-chip-bg": this.color });
     return chip;
   }
   eq(other) {
@@ -462,17 +437,18 @@ var AtomCreator = class extends import_obsidian3.Plugin {
         if (this.processing.has(file.path))
           return;
         clearTimeout(this.debounceMap[file.path]);
-        this.debounceMap[file.path] = setTimeout(async () => {
+        const run = async () => {
           this.processing.add(file.path);
           try {
-            await processFile(file, this.settings, this.app.vault, this.app.workspace, this.app.fileManager);
+            await processFile(file, this.settings, this.app.vault, this.app.workspace);
           } finally {
             setTimeout(() => this.processing.delete(file.path), 1e3);
           }
-        }, this.settings.debounceMs);
+        };
+        this.debounceMap[file.path] = setTimeout(() => void run(), this.settings.debounceMs);
       })
     );
-    console.log("Atom Creator loaded");
+    console.debug("SuperTags loaded");
   }
   onunload() {
     Object.values(this.debounceMap).forEach(clearTimeout);
