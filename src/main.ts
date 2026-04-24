@@ -29,7 +29,7 @@ export default class AtomCreator extends Plugin {
 				const run = async () => {
 					this.processing.add(file.path);
 					try {
-						await processFile(file, this.settings, this.app.vault, this.app.workspace);
+						await processFile(file, this.settings, this.app.vault, this.app.workspace, this.app.fileManager);
 					} finally {
 						setTimeout(() => this.processing.delete(file.path), 1000);
 					}

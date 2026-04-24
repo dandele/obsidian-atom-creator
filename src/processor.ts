@@ -1,4 +1,4 @@
-import { TFile, Vault, Workspace, Notice } from 'obsidian';
+import { TFile, Vault, Workspace, FileManager, Notice } from 'obsidian';
 import type { Supertag, AtomCreatorSettings } from './settings';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -41,6 +41,7 @@ function showUndoNotice(
 	action: UndoAction,
 	vault: Vault,
 	workspace: Workspace,
+	fileManager: FileManager,
 ) {
 	for (const created of action.created) {
 		const fragment = document.createDocumentFragment();
@@ -71,23 +72,23 @@ function showUndoNotice(
 
 		undoBtn.onclick = () => void (async () => {
 			notice.hide();
-			await undoAction(action, vault);
+			await undoAction(action, vault, fileManager);
 		})();
 	}
 }
 
-async function undoAction(action: UndoAction, vault: Vault) {
+async function undoAction(action: UndoAction, vault: Vault, fileManager: FileManager) {
 	for (const created of action.created) {
 		const file = vault.getAbstractFileByPath(created.path);
 		if (file instanceof TFile) {
-			await vault.delete(file);
+			await fileManager.trashFile(file);
 		}
 	}
 	const sourceFile = vault.getAbstractFileByPath(action.filePath);
 	if (sourceFile instanceof TFile) {
 		await vault.modify(sourceFile, action.originalContent);
 	}
-	new Notice('↩ Undo successful');
+	new Notice('Undo successful');
 }
 
 // ── Core processor ─────────────────────────────────────────────────────────────
@@ -97,6 +98,7 @@ export async function processFile(
 	settings: AtomCreatorSettings,
 	vault: Vault,
 	workspace: Workspace,
+	fileManager: FileManager,
 ): Promise<void> {
 	let content: string;
 	try { content = await vault.read(file); }
@@ -161,5 +163,5 @@ export async function processFile(
 	await vault.modify(file, lines.join('\n'));
 
 	const action: UndoAction = { filePath: file.path, originalContent, created };
-	showUndoNotice(action, vault, workspace);
+	showUndoNotice(action, vault, workspace, fileManager);
 }

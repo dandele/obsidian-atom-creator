@@ -117,7 +117,7 @@ export class AtomCreatorSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.addButton(btn => btn
-				.setButtonText('+ Add supertag')
+				.setButtonText('Add supertag')
 				.setCta()
 				.onClick(async () => {
 					this.plugin.settings.supertags.push({
@@ -146,7 +146,7 @@ export class AtomCreatorSettingTab extends PluginSettingTab {
 			chip.textContent = supertag.tag;
 			chip.setCssProps({ '--st-chip-bg': supertag.color });
 
-			const deleteBtn = header.createEl('button', { text: '✕ Remove', cls: 'st-delete-btn' });
+			const deleteBtn = header.createEl('button', { text: 'Remove', cls: 'st-delete-btn' });
 			deleteBtn.onclick = () => void (async () => {
 				this.plugin.settings.supertags.splice(index, 1);
 				await this.plugin.saveSettings();
