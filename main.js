@@ -101,7 +101,7 @@ var AtomCreatorSettingTab = class extends import_obsidian.PluginSettingTab {
     });
     const supertagsContainer = containerEl.createDiv();
     this.renderSupertags(supertagsContainer);
-    new import_obsidian.Setting(containerEl).addButton((btn) => btn.setButtonText("+ Add supertag").setCta().onClick(async () => {
+    new import_obsidian.Setting(containerEl).addButton((btn) => btn.setButtonText("Add supertag").setCta().onClick(async () => {
       this.plugin.settings.supertags.push({
         id: randomId(),
         tag: "#newtag",
@@ -123,7 +123,7 @@ var AtomCreatorSettingTab = class extends import_obsidian.PluginSettingTab {
       const chip = header.createEl("span", { cls: "st-settings-chip" });
       chip.textContent = supertag.tag;
       chip.setCssProps({ "--st-chip-bg": supertag.color });
-      const deleteBtn = header.createEl("button", { text: "\u2715 Remove", cls: "st-delete-btn" });
+      const deleteBtn = header.createEl("button", { text: "Remove", cls: "st-delete-btn" });
       deleteBtn.onclick = () => void (async () => {
         this.plugin.settings.supertags.splice(index, 1);
         await this.plugin.saveSettings();
@@ -217,7 +217,7 @@ ${frontmatter}
 ${body}
 `;
 }
-function showUndoNotice(action, vault, workspace) {
+function showUndoNotice(action, vault, workspace, fileManager) {
   for (const created of action.created) {
     const fragment = document.createDocumentFragment();
     const container = fragment.createEl("div", { cls: "st-notice-container" });
@@ -240,24 +240,24 @@ function showUndoNotice(action, vault, workspace) {
     })();
     undoBtn.onclick = () => void (async () => {
       notice.hide();
-      await undoAction(action, vault);
+      await undoAction(action, vault, fileManager);
     })();
   }
 }
-async function undoAction(action, vault) {
+async function undoAction(action, vault, fileManager) {
   for (const created of action.created) {
     const file = vault.getAbstractFileByPath(created.path);
     if (file instanceof import_obsidian2.TFile) {
-      await vault.delete(file);
+      await fileManager.trashFile(file);
     }
   }
   const sourceFile = vault.getAbstractFileByPath(action.filePath);
   if (sourceFile instanceof import_obsidian2.TFile) {
     await vault.modify(sourceFile, action.originalContent);
   }
-  new import_obsidian2.Notice("\u21A9 Undo successful");
+  new import_obsidian2.Notice("Undo successful");
 }
-async function processFile(file, settings, vault, workspace) {
+async function processFile(file, settings, vault, workspace, fileManager) {
   var _a, _b, _c;
   let content;
   try {
@@ -322,7 +322,7 @@ async function processFile(file, settings, vault, workspace) {
     return;
   await vault.modify(file, lines.join("\n"));
   const action = { filePath: file.path, originalContent, created };
-  showUndoNotice(action, vault, workspace);
+  showUndoNotice(action, vault, workspace, fileManager);
 }
 
 // src/decorations.ts
@@ -440,7 +440,7 @@ var AtomCreator = class extends import_obsidian3.Plugin {
         const run = async () => {
           this.processing.add(file.path);
           try {
-            await processFile(file, this.settings, this.app.vault, this.app.workspace);
+            await processFile(file, this.settings, this.app.vault, this.app.workspace, this.app.fileManager);
           } finally {
             setTimeout(() => this.processing.delete(file.path), 1e3);
           }
