@@ -448,7 +448,6 @@ var AtomCreator = class extends import_obsidian3.Plugin {
         this.debounceMap[file.path] = setTimeout(() => void run(), this.settings.debounceMs);
       })
     );
-    console.debug("SuperTags loaded");
   }
   onunload() {
     Object.values(this.debounceMap).forEach(clearTimeout);

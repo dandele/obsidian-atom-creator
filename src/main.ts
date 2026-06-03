@@ -37,8 +37,6 @@ export default class AtomCreator extends Plugin {
 				this.debounceMap[file.path] = setTimeout(() => void run(), this.settings.debounceMs);
 			})
 		);
-
-		console.debug('SuperTags loaded');
 	}
 
 	onunload() {
