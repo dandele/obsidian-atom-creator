@@ -1,6 +1,6 @@
 {
   "name": "obsidian-atom-creator",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Tana-style supertags: tag a line, get a structured note — instantly, on every device.",
   "main": "main.js",
   "scripts": {
@@ -21,7 +21,6 @@
     "@codemirror/state": "^6.0.0",
     "@codemirror/view": "^6.0.0",
     "@types/node": "^16.11.6",
-    "builtin-modules": "^3.3.0",
     "esbuild": "0.17.3",
     "obsidian": "latest",
     "tslib": "2.4.0",
